@@ -23,6 +23,7 @@ import Animated, {
   FadeInUp,
   SlideInRight,
 } from 'react-native-reanimated';
+import axios from 'axios'; // Add this import
 
 // Define message types
 const MESSAGE_TYPES = {
@@ -78,10 +79,7 @@ export default function Health() {
 
   const handleInputChange = (text) => {
     setInputText(text);
-    // Animate input height based on content
-    const numLines = text.split('\n').length;
-    const newHeight = Math.min(50 + numLines * 20, 120);
-    inputHeight.value = withTiming(newHeight, { duration: 100 });
+    // Remove the height adjustment code
   };
 
   const sendMessage = async () => {
@@ -122,62 +120,51 @@ export default function Health() {
   // This function simulates the integration with ChatGPT API
   // Replace this with actual API call in production
   const simulateChatGptResponse = async (userInput) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Simple keyword matching for demo purposes
-    const lowerInput = userInput.toLowerCase();
-    let response;
-    
-    if (!assessmentCompleted) {
-      if (lowerInput.includes('fever') || lowerInput.includes('temperature')) {
-        response = "I see you're experiencing fever. How high is your temperature? Do you have any other symptoms like cough, sore throat, or body aches?";
-      } else if (lowerInput.includes('headache') || lowerInput.includes('pain')) {
-        response = "I understand you're having headaches or pain. How long have you been experiencing this? Is it severe or does it come and go?";
-      } else if (lowerInput.includes('chest') || lowerInput.includes('heart') || lowerInput.includes('breathing')) {
-        // High severity symptoms trigger emergency assessment
-        setAssessmentCompleted(true);
-        setAssessmentOutcome(ASSESSMENT_OUTCOMES.EMERGENCY);
-        response = "Based on your description of chest pain or breathing difficulties, this could be serious. I recommend seeking emergency medical attention immediately.";
-      } else if (lowerInput.includes('rash') || lowerInput.includes('skin')) {
-        // Medium severity symptoms suggest GP visit
-        setAssessmentCompleted(true);
-        setAssessmentOutcome(ASSESSMENT_OUTCOMES.GP_VISIT);
-        response = "Based on your description of skin symptoms, I recommend seeing a general practitioner for proper diagnosis and treatment.";
-      } else if (lowerInput.includes('cold') || lowerInput.includes('flu') || lowerInput.includes('cough')) {
-        // Low severity symptoms suggest self-management
-        setAssessmentCompleted(true);
-        setAssessmentOutcome(ASSESSMENT_OUTCOMES.SELF_MANAGE);
-        response = "Based on your symptoms, this sounds like a common cold or mild flu. Rest, stay hydrated, and take over-the-counter medications for symptom relief if needed.";
-      } else {
-        response = "Thank you for sharing that. Could you please tell me more about your symptoms? When did they start and how severe are they?";
-      }
-    } else {
-      // Assessment already completed
-      response = "Is there anything else I can help you with regarding your health concern?";
-    }
-    
-    setMessages(prev => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        text: response,
-        type: MESSAGE_TYPES.BOT,
-        timestamp: new Date()
-      }
-    ]);
-    
-    // If assessment just completed, add options
-    if (assessmentCompleted && messages.every(msg => msg.type !== MESSAGE_TYPES.OPTION)) {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      const optionsMessage = {
-        id: 'options-' + Date.now().toString(),
-        type: MESSAGE_TYPES.OPTION,
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, optionsMessage]);
+    const apiKey = 'CHAT_GPT_API_KEY'; // Replace with your actual API key
+    const apiUrl = 'https://api.openai.com/v1/chat/completions';
+
+    try {
+      const response = await axios.post(
+        apiUrl,
+        {
+          model: 'gpt-4o-mini', // Use 'gpt-4' or 'gpt-3.5-turbo' based on your subscription
+          messages: [
+            { role: 'system', content: "You are a helpful health assistant trained to provide general health advice based on user input. While you aim to provide accurate and helpful information/basic diagnosis, you are not a licensed medical professional. Always advise users to consult a qualified healthcare provider for medical concerns." },
+            { role: 'user', content: userInput },
+          ],
+          max_tokens: 150, // Adjust token limit as needed
+          temperature: 0.7, // Adjust creativity level
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`,
+          },
+        }
+      );
+
+      const chatGptResponse = response.data.choices[0].message.content;
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          text: chatGptResponse,
+          type: MESSAGE_TYPES.BOT,
+          timestamp: new Date(),
+        },
+      ]);
+    } catch (error) {
+      console.error('Error calling ChatGPT API:', error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          text: 'Sorry, I encountered an error while processing your request. Please try again later.',
+          type: MESSAGE_TYPES.BOT,
+          timestamp: new Date(),
+        },
+      ]);
     }
   };
 
@@ -359,13 +346,13 @@ export default function Health() {
             )}
           </ScrollView>
           
-          <Animated.View style={[styles.inputContainer, inputContainerStyle]}>
+          <Animated.View style={styles.inputContainer }>
             <TextInput
               style={styles.input}
               placeholder="Type your symptoms here..."
               value={inputText}
               onChangeText={handleInputChange}
-              multiline
+              multiline= {false}
             />
             <TouchableOpacity 
               style={[
@@ -463,22 +450,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
-    alignItems: 'flex-end',
+    alignItems: 'center', // Changed from 'flex-end' to 'center'
+    height: 64, // Fixed height for the container
   },
   input: {
     flex: 1,
     backgroundColor: '#f1f5f9',
     borderRadius: 20,
     paddingHorizontal: 16,
-    paddingVertical: 5,
+    paddingVertical: 10,
     paddingRight: 40,
     fontSize: 16,
-    maxHeight: 120,
+    height: 40, // Fixed height for the input
   },
   sendButton: {
     position: 'absolute',
     right: 22,
-    bottom: 18,
+    bottom: 16, // Fixed distance from bottom
     width: 32,
     height: 32,
     borderRadius: 16,
