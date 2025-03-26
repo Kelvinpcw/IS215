@@ -69,6 +69,26 @@ export default function AppLayout() {
           href: null, // This makes the tab not directly accessible
         }}
       />
+      <Tabs.Screen
+        name="medication"
+        options={{
+          title: 'Medication',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="medical" size={size} color={color} />
+          ),
+          href: null, // This makes the tab not directly accessible
+        }}
+      />
+      <Tabs.Screen
+        name="reports"
+        options={{
+          title: 'Reports',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="document-text" size={size} color={color} />
+          ),
+          href: null, // This makes the tab not directly accessible
+        }}
+      />
     </Tabs>
   );
 }

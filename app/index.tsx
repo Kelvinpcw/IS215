@@ -51,23 +51,45 @@ export default function Index() {
           <Text style={styles.welcomeText}>Welcome to SingHealth</Text>
           <Text style={styles.subtitle}>Your health, our priority</Text>
           
-          {/* Quick Action Cards */}
+          {/* Quick Action Cards - Modified to 2x2 grid */}
           <View style={styles.quickActionsContainer}>
-            <TouchableOpacity 
-              style={styles.actionCard}
-              onPress={() => navigateTo('/appointments')}
-            >
-              <Ionicons name="calendar" size={28} color="#0077b6" />
-              <Text style={styles.actionText}>Book Appointment</Text>
-            </TouchableOpacity>
+            {/* First row */}
+            <View style={styles.actionRow}>
+              <TouchableOpacity 
+                style={styles.actionCard}
+                onPress={() => navigateTo('/appointments')}
+              >
+                <Ionicons name="calendar" size={28} color="#0077b6" />
+                <Text style={styles.actionText}>Book Appointment</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.actionCard}
+                onPress={() => navigateTo('/health')}
+              >
+                <Ionicons name="medkit" size={28} color="#0077b6" />
+                <Text style={styles.actionText}>Health Assistant</Text>
+              </TouchableOpacity>
+            </View>
             
-            <TouchableOpacity 
-              style={styles.actionCard}
-              onPress={() => navigateTo('/health')}
-            >
-              <Ionicons name="medkit" size={28} color="#0077b6" />
-              <Text style={styles.actionText}>Health Assistant</Text>
-            </TouchableOpacity>
+            {/* Second row */}
+            <View style={styles.actionRow}>
+              <TouchableOpacity 
+                style={styles.actionCard}
+                onPress={() => navigateTo('/medication')}
+              >
+                <Ionicons name="medical" size={28} color="#0077b6" />
+                <Text style={styles.actionText}>Medication</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.actionCard}
+                onPress={() => navigateTo('/reports')}
+              >
+                <Ionicons name="document-text" size={28} color="#0077b6" />
+                <Text style={styles.actionText}>Health Report</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </Animated.View>
         
@@ -228,9 +250,12 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   quickActionsContainer: {
+    marginVertical: 10,
+  },
+  actionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginVertical: 10,
+    marginBottom: 15,
   },
   actionCard: {
     backgroundColor: '#ffffff',
