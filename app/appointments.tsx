@@ -28,11 +28,30 @@ import Animated, {
 // Get screen width for responsive sizing
 const { width } = Dimensions.get('window');
 
-// Calculate card width based on screen size
+// Calculate card width based on screen size with fixed dimensions
 const getCardWidth = () => {
   const cardPerRow = width < 360 ? 2 : 3;
   const totalMargin = 10 * (cardPerRow + 1);
   return (width - totalMargin) / cardPerRow;
+};
+
+// Define fixed dimensions for consistent layout
+const FIXED_DIMENSIONS = {
+  specialtyCard: {
+    width: getCardWidth(),
+    height: 120, // Fixed height for specialty cards
+  },
+  doctorCard: {
+    height: 110, // Fixed height for doctor cards
+  },
+  timeSlot: {
+    width: '48%',
+    height: 70, // Fixed height for time slots
+  },
+  dateItem: {
+    width: 60,
+    height: 80, // Fixed height for date items
+  }
 };
 
 // Mock data
@@ -43,7 +62,7 @@ const SPECIALTIES = [
   { id: '4', name: 'Orthopedics', icon: 'fitness' },
   { id: '5', name: 'Dermatology', icon: 'body' },
   { id: '6', name: 'Neurology', icon: 'pulse' },
-  { id: '7', name: 'Ophthalmology', icon: 'eye' },
+  { id: '7', name: 'Optometrist', icon: 'eye' },
   { id: '8', name: 'ENT', icon: 'ear' },
 ];
 
@@ -244,7 +263,11 @@ export default function Appointments() {
                     <View style={styles.specialtyIconContainer}>
                       <Ionicons name={specialty.icon} size={28} color="#0077b6" />
                     </View>
-                    <Text style={styles.specialtyName}>{specialty.name}</Text>
+                    <View style={styles.specialtyNameContainer}>
+                      <Text style={styles.specialtyName} numberOfLines={2} ellipsizeMode="tail">
+                        {specialty.name}
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 </Animated.View>
               ))}
@@ -258,7 +281,9 @@ export default function Appointments() {
               <Text style={styles.selectedItemLabel}>Selected Specialty:</Text>
               <View style={styles.selectedItem}>
                 <Ionicons name={selectedSpecialty.icon} size={20} color="#0077b6" />
-                <Text style={styles.selectedItemText}>{selectedSpecialty.name}</Text>
+                <Text style={styles.selectedItemText} numberOfLines={1} ellipsizeMode="tail">
+                  {selectedSpecialty.name}
+                </Text>
               </View>
             </View>
             
@@ -303,9 +328,15 @@ export default function Appointments() {
                         <Ionicons name="person-circle" size={60} color="#0077b6" />
                       </View>
                       <View style={styles.doctorDetails}>
-                        <Text style={styles.doctorName}>{doctor.name}</Text>
-                        <Text style={styles.doctorSpecialty}>{doctor.specialty}</Text>
-                        <Text style={styles.doctorHospital}>{doctor.hospital}</Text>
+                        <Text style={styles.doctorName} numberOfLines={1} ellipsizeMode="tail">
+                          {doctor.name}
+                        </Text>
+                        <Text style={styles.doctorSpecialty} numberOfLines={1} ellipsizeMode="tail">
+                          {doctor.specialty}
+                        </Text>
+                        <Text style={styles.doctorHospital} numberOfLines={1} ellipsizeMode="tail">
+                          {doctor.hospital}
+                        </Text>
                         <View style={styles.ratingContainer}>
                           <Ionicons name="star" size={16} color="#fbbf24" />
                           <Text style={styles.ratingText}>{doctor.rating}</Text>
@@ -325,7 +356,9 @@ export default function Appointments() {
               <Text style={styles.selectedItemLabel}>Selected Doctor:</Text>
               <View style={styles.selectedItem}>
                 <Ionicons name="person" size={20} color="#0077b6" />
-                <Text style={styles.selectedItemText}>{selectedDoctor.name}</Text>
+                <Text style={styles.selectedItemText} numberOfLines={1} ellipsizeMode="tail">
+                  {selectedDoctor.name}
+                </Text>
               </View>
             </View>
             
@@ -376,24 +409,34 @@ export default function Appointments() {
               <Text style={styles.summaryTitle}>Appointment Summary</Text>
               <View style={styles.summaryItem}>
                 <Text style={styles.summaryLabel}>Specialty:</Text>
-                <Text style={styles.summaryValue}>{selectedSpecialty.name}</Text>
+                <Text style={styles.summaryValue} numberOfLines={1} ellipsizeMode="tail">
+                  {selectedSpecialty.name}
+                </Text>
               </View>
               <View style={styles.summaryItem}>
                 <Text style={styles.summaryLabel}>Doctor:</Text>
-                <Text style={styles.summaryValue}>{selectedDoctor.name}</Text>
+                <Text style={styles.summaryValue} numberOfLines={1} ellipsizeMode="tail">
+                  {selectedDoctor.name}
+                </Text>
               </View>
               <View style={styles.summaryItem}>
                 <Text style={styles.summaryLabel}>Hospital:</Text>
-                <Text style={styles.summaryValue}>{selectedDoctor.hospital}</Text>
+                <Text style={styles.summaryValue} numberOfLines={1} ellipsizeMode="tail">
+                  {selectedDoctor.hospital}
+                </Text>
               </View>
               <View style={styles.summaryItem}>
                 <Text style={styles.summaryLabel}>Date:</Text>
-                <Text style={styles.summaryValue}>{format(selectedDate, 'EEEE, MMMM d, yyyy')}</Text>
+                <Text style={styles.summaryValue} numberOfLines={1} ellipsizeMode="tail">
+                  {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+                </Text>
               </View>
               {selectedTime && (
                 <View style={styles.summaryItem}>
                   <Text style={styles.summaryLabel}>Time:</Text>
-                  <Text style={styles.summaryValue}>{selectedTime}</Text>
+                  <Text style={styles.summaryValue} numberOfLines={1} ellipsizeMode="tail">
+                    {selectedTime}
+                  </Text>
                 </View>
               )}
             </View>
@@ -456,7 +499,7 @@ export default function Appointments() {
                 <View style={styles.appointmentConfirmItem}>
                   <Ionicons name="person-outline" size={16} color="#0077b6" />
                   <Text style={styles.appointmentConfirmLabel}>Doctor:</Text>
-                  <Text style={styles.appointmentConfirmValue}>
+                  <Text style={styles.appointmentConfirmValue} numberOfLines={1} ellipsizeMode="tail">
                     {selectedDoctor?.name || ""}
                   </Text>
                 </View>
@@ -464,7 +507,7 @@ export default function Appointments() {
                 <View style={styles.appointmentConfirmItem}>
                   <Ionicons name="medical-outline" size={16} color="#0077b6" />
                   <Text style={styles.appointmentConfirmLabel}>Specialty:</Text>
-                  <Text style={styles.appointmentConfirmValue}>
+                  <Text style={styles.appointmentConfirmValue} numberOfLines={1} ellipsizeMode="tail">
                     {selectedSpecialty?.name || ""}
                   </Text>
                 </View>
@@ -472,7 +515,7 @@ export default function Appointments() {
                 <View style={styles.appointmentConfirmItem}>
                   <Ionicons name="time-outline" size={16} color="#0077b6" />
                   <Text style={styles.appointmentConfirmLabel}>Date & Time:</Text>
-                  <Text style={styles.appointmentConfirmValue}>
+                  <Text style={styles.appointmentConfirmValue} numberOfLines={1} ellipsizeMode="tail">
                     {selectedDate ? format(selectedDate, 'MMM d, yyyy') : ""} at {selectedTime || ""}
                   </Text>
                 </View>
@@ -480,7 +523,7 @@ export default function Appointments() {
                 <View style={styles.appointmentConfirmItem}>
                   <Ionicons name="location-outline" size={16} color="#0077b6" />
                   <Text style={styles.appointmentConfirmLabel}>Location:</Text>
-                  <Text style={styles.appointmentConfirmValue}>
+                  <Text style={styles.appointmentConfirmValue} numberOfLines={1} ellipsizeMode="tail">
                     {selectedDoctor?.hospital || ""}
                   </Text>
                 </View>
@@ -587,8 +630,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 15,
     alignItems: 'center',
-    justifyContent: 'center',
-    width: getCardWidth(),
+    justifyContent: 'space-between',
+    width: FIXED_DIMENSIONS.specialtyCard.width,
+    height: FIXED_DIMENSIONS.specialtyCard.height,
     margin: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -603,14 +647,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f9ff',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+  },
+  specialtyNameContainer: {
+    width: '100%',
+    height: 36, // Fixed height for name container
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   specialtyName: {
     fontSize: 14,
     fontWeight: '600',
     color: '#1e293b',
     textAlign: 'center',
-    width: '100%',
   },
   selectedItemContainer: {
     backgroundColor: '#f0f9ff',
@@ -633,12 +681,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#0077b6',
     marginLeft: 8,
+    flex: 1,
   },
   doctorCard: {
     backgroundColor: '#ffffff',
     borderRadius: 12,
     padding: 15,
     marginBottom: 15,
+    height: FIXED_DIMENSIONS.doctorCard.height,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -647,28 +697,31 @@ const styles = StyleSheet.create({
   },
   doctorInfo: {
     flexDirection: 'row',
+    height: '100%',
   },
   doctorImageContainer: {
     marginRight: 15,
+    justifyContent: 'center',
   },
   doctorDetails: {
     flex: 1,
+    justifyContent: 'center',
   },
   doctorName: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#1e293b',
-    marginBottom: 5,
+    marginBottom: 3,
   },
   doctorSpecialty: {
     fontSize: 14,
     color: '#64748b',
-    marginBottom: 3,
+    marginBottom: 2,
   },
   doctorHospital: {
     fontSize: 14,
     color: '#64748b',
-    marginBottom: 5,
+    marginBottom: 3,
   },
   ratingContainer: {
     flexDirection: 'row',
@@ -683,8 +736,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   dateItem: {
-    width: 60,
-    height: 80,
+    width: FIXED_DIMENSIONS.dateItem.width,
+    height: FIXED_DIMENSIONS.dateItem.height,
     borderRadius: 12,
     backgroundColor: '#ffffff',
     alignItems: 'center',
@@ -722,12 +775,12 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   timeSlot: {
-    width: '48%',
-    paddingVertical: 12,
-    paddingHorizontal: 10,
+    width: FIXED_DIMENSIONS.timeSlot.width,
+    height: FIXED_DIMENSIONS.timeSlot.height,
     borderRadius: 8,
     backgroundColor: '#ffffff',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -766,6 +819,7 @@ const styles = StyleSheet.create({
   summaryItem: {
     flexDirection: 'row',
     marginBottom: 10,
+    height: 24, // Fixed height for summary items
   },
   summaryLabel: {
     width: 80,
@@ -791,6 +845,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 10,
     elevation: 4,
+    height: 50, // Fixed height for button
   },
   bookButtonText: {
     color: '#ffffff',
@@ -856,6 +911,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     flexDirection: 'row',
     alignItems: 'center',
+    height: 40, // Fixed height for header
   },
   appointmentConfirmTitle: {
     color: '#ffffff',
@@ -871,6 +927,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 6,
+    height: 32, // Fixed height for items
   },
   appointmentConfirmLabel: {
     fontSize: 14,
@@ -899,6 +956,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: 12,
     marginVertical: 20,
+    height: 200, // Fixed height for no doctors container
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -917,6 +975,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
     marginTop: 10,
+    height: 40, // Fixed height for button
+    justifyContent: 'center',
   },
   goBackButtonText: {
     color: '#ffffff',

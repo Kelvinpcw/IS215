@@ -93,7 +93,67 @@ export default function Index() {
           </View>
         </Animated.View>
         
-        {/* Upcoming Appointments Section */}
+        {/* Medication Reminders Section (Moved up) */}
+        <Animated.View style={[styles.sectionContainer, animatedStyle]}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Medication Reminders</Text>
+            <TouchableOpacity onPress={() => navigateTo('/medication')}>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {/* Today's Medication Card */}
+          <View style={styles.medicationCard}>
+            <View style={styles.medicationTime}>
+              <Ionicons name="time-outline" size={24} color="#0077b6" />
+              <Text style={styles.medTimeText}>8:00 AM</Text>
+            </View>
+            <View style={styles.medicationDivider} />
+            <View style={styles.medicationDetails}>
+              <Text style={styles.medicationName}>Simvastatin 20mg</Text>
+              <Text style={styles.medicationInstructions}>
+                Take 1 tablet with food
+              </Text>
+              <View style={styles.medicationStatusContainer}>
+                <View style={styles.statusIndicator} />
+                <Text style={styles.statusText}>Take now</Text>
+              </View>
+            </View>
+            <TouchableOpacity style={styles.takenButton}>
+              <Text style={styles.takenButtonText}>Mark as Taken</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {/* Evening Medication Card */}
+          <View style={styles.medicationCard}>
+            <View style={styles.medicationTime}>
+              <Ionicons name="time-outline" size={24} color="#0077b6" />
+              <Text style={styles.medTimeText}>7:00 PM</Text>
+            </View>
+            <View style={styles.medicationDivider} />
+            <View style={styles.medicationDetails}>
+              <Text style={styles.medicationName}>Metformin 500mg</Text>
+              <Text style={styles.medicationInstructions}>
+                Take 1 tablet after dinner
+              </Text>
+              <View style={styles.medicationStatusContainer}>
+                <View style={styles.upcomingIndicator} />
+                <Text style={styles.upcomingStatusText}>Upcoming</Text>
+              </View>
+            </View>
+          </View>
+          
+          {/* Add Medication Button */}
+          <TouchableOpacity 
+            style={styles.addMedicationButton}
+            onPress={() => navigateTo('/medication')}
+          >
+            <Ionicons name="add-circle-outline" size={20} color="#ffffff" />
+            <Text style={styles.addMedicationText}>Add Medication</Text>
+          </TouchableOpacity>
+        </Animated.View>
+        
+        {/* Upcoming Appointments Section (Moved down) */}
         <Animated.View style={[styles.sectionContainer, animatedStyle]}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Upcoming Appointments</Text>
@@ -127,37 +187,6 @@ export default function Index() {
             </TouchableOpacity>
           </View>
           */}
-        </Animated.View>
-        
-        {/* Health Services Section */}
-        <Animated.View style={[styles.sectionContainer, animatedStyle]}>
-          <Text style={styles.sectionTitle}>Health Services</Text>
-          
-          <ScrollView 
-            horizontal={true} 
-            showsHorizontalScrollIndicator={false}
-            style={styles.servicesScrollView}
-          >
-            <TouchableOpacity style={styles.serviceCard}>
-              <Ionicons name="heart" size={24} color="#0077b6" />
-              <Text style={styles.serviceTitle}>Cardiology</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.serviceCard}>
-              <Ionicons name="fitness" size={24} color="#0077b6" />
-              <Text style={styles.serviceTitle}>Orthopedics</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.serviceCard}>
-              <Ionicons name="eye" size={24} color="#0077b6" />
-              <Text style={styles.serviceTitle}>Ophthalmology</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.serviceCard}>
-              <Ionicons name="woman" size={24} color="#0077b6" />
-              <Text style={styles.serviceTitle}>OB-GYN</Text>
-            </TouchableOpacity>
-          </ScrollView>
         </Animated.View>
         
         {/* Health Tips Section */}
@@ -363,31 +392,106 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: 'bold',
   },
-  servicesScrollView: {
-    flexDirection: 'row',
-    marginBottom: 10,
-  },
-  serviceCard: {
+  // Medication styles (new)
+  medicationCard: {
     backgroundColor: '#ffffff',
     borderRadius: 12,
-    padding: 20,
+    padding: 15,
+    marginBottom: 15,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 15,
-    width: 120,
-    height: 120,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
     elevation: 2,
   },
-  serviceTitle: {
-    marginTop: 10,
-    fontWeight: '600',
-    color: '#1e293b',
-    textAlign: 'center',
+  medicationTime: {
+    alignItems: 'center',
+    width: 60,
   },
+  medTimeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#0077b6',
+    marginTop: 5,
+  },
+  medicationDivider: {
+    width: 1,
+    height: '80%',
+    backgroundColor: '#e2e8f0',
+    marginHorizontal: 15,
+  },
+  medicationDetails: {
+    flex: 1,
+  },
+  medicationName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1e293b',
+    marginBottom: 4,
+  },
+  medicationInstructions: {
+    fontSize: 14,
+    color: '#64748b',
+    marginBottom: 8,
+  },
+  medicationStatusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#22c55e',
+    marginRight: 6,
+  },
+  upcomingIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#94a3b8',
+    marginRight: 6,
+  },
+  statusText: {
+    fontSize: 12,
+    color: '#22c55e',
+    fontWeight: '600',
+  },
+  upcomingStatusText: {
+    fontSize: 12,
+    color: '#94a3b8',
+    fontWeight: '600',
+  },
+  takenButton: {
+    backgroundColor: '#e2f2ff',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginLeft: 10,
+  },
+  takenButtonText: {
+    color: '#0077b6',
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  addMedicationButton: {
+    backgroundColor: '#0077b6',
+    borderRadius: 10,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  addMedicationText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  // Existing styles from your original component
   tipCard: {
     backgroundColor: '#ffffff',
     borderRadius: 12,
