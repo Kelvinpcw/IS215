@@ -22,8 +22,10 @@ import Animated, {
   withSequence,
   FadeInUp,
   SlideInRight,
+  FadeIn,
+  FadeOut,
 } from 'react-native-reanimated';
-import axios from 'axios'; // Add this import
+import axios from 'axios';
 
 // Define message types
 const MESSAGE_TYPES = {
@@ -39,10 +41,27 @@ const ASSESSMENT_OUTCOMES = {
   EMERGENCY: 'emergency'
 };
 
+// User profile information (fixed for this example)
+const USER_PROFILE = {
+  age: 60,
+  gender: 'Male',
+  allergies: [
+    'Penicillin (causes hives and difficulty breathing)',
+    'Shellfish (causes severe swelling and anaphylaxis)',
+    'Dust mites (causes sneezing and congestion)',
+    'Latex (causes skin rash and itching)'
+  ],
+  medicalHistory: [
+    'Type 2 diabetes diagnosed 8 years ago, currently managed with oral medication',
+    'Hypertension for 12 years, controlled with medication',
+    'Mild heart attack 5 years ago, followed by stent placement'
+  ]
+};
+
 // Initial welcome message
 const welcomeMessage = {
   id: 'welcome',
-  text: 'Hello! I\'m your SingHealth assistant. I can provide a preliminary assessment of your symptoms. How can I help you today?',
+  text: 'Hello! I\'m your SingHealth assistant. I can provide a preliminary assessment of your symptoms. Your profile information has been loaded. How can I help you today?',
   type: MESSAGE_TYPES.BOT,
   timestamp: new Date()
 };
@@ -54,11 +73,19 @@ export default function Health() {
   const [isLoading, setIsLoading] = useState(false);
   const [assessmentCompleted, setAssessmentCompleted] = useState(false);
   const [assessmentOutcome, setAssessmentOutcome] = useState(null);
+  const [showProfile, setShowProfile] = useState(false);
+  
+  // Voice input state
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const recordingTimer = useRef(null);
   
   // Animation refs and values
   const scrollViewRef = useRef(null);
   const inputHeight = useSharedValue(50);
   const fadeAnim = useRef(new RNAnimated.Value(0)).current;
+  const micScale = useSharedValue(1);
   
   useEffect(() => {
     RNAnimated.timing(fadeAnim, {
@@ -76,10 +103,39 @@ export default function Health() {
       }, 200);
     }
   }, [messages]);
+  
+  // Timer for recording animation
+  useEffect(() => {
+    if (isRecording) {
+      recordingTimer.current = setInterval(() => {
+        setRecordingTime(prevTime => prevTime + 1);
+      }, 1000);
+    } else {
+      if (recordingTimer.current) {
+        clearInterval(recordingTimer.current);
+        setRecordingTime(0);
+      }
+    }
+    
+    return () => {
+      if (recordingTimer.current) {
+        clearInterval(recordingTimer.current);
+      }
+    };
+  }, [isRecording]);
 
   const handleInputChange = (text) => {
     setInputText(text);
-    // Remove the height adjustment code
+  };
+
+  // Format user profile for the API request
+  const formatUserProfile = () => {
+    return `**Age:** ${USER_PROFILE.age} years old
+**Gender:** ${USER_PROFILE.gender}
+**Allergies:**
+${USER_PROFILE.allergies.map(allergy => `* ${allergy}`).join('\n')}
+**Medical History:**
+${USER_PROFILE.medicalHistory.map(history => `* ${history}`).join('\n')}`;
   };
 
   const sendMessage = async () => {
@@ -118,22 +174,25 @@ export default function Health() {
   };
 
   // This function simulates the integration with ChatGPT API
-  // Replace this with actual API call in production
   const simulateChatGptResponse = async (userInput) => {
-    const apiKey = 'CHAT_GPT_API_KEY'; // Replace with your actual API key
+    const apiKey = 'CHAT_GPT_APIKEY'; // Replace with your actual API key
     const apiUrl = 'https://api.openai.com/v1/chat/completions';
+
+    // Combine user profile with their input
+    const profileInfo = formatUserProfile();
+    const combinedInput = `${profileInfo}\n\nSymptoms described by patient: ${userInput}`;
 
     try {
       const response = await axios.post(
         apiUrl,
         {
-          model: 'gpt-4o-mini', // Use 'gpt-4' or 'gpt-3.5-turbo' based on your subscription
+          model: 'gpt-4o-mini',
           messages: [
-            { role: 'system', content: "You are a helpful health assistant trained to provide general health advice based on user input. While you aim to provide accurate and helpful information/basic diagnosis, you are not a licensed medical professional. Always advise users to consult a qualified healthcare provider for medical concerns." },
-            { role: 'user', content: userInput },
+            { role: 'system', content: "You are a helpful health assistant trained to provide general health advice based on user input. While you aim to provide accurate and helpful information/basic diagnosis, you are not a licensed medical professional. Always advise users to consult a qualified healthcare provider for medical concerns. Consider the patient's age, gender, allergies, and medical history when providing advice." },
+            { role: 'user', content: combinedInput },
           ],
-          max_tokens: 150, // Adjust token limit as needed
-          temperature: 0.7, // Adjust creativity level
+          max_tokens: 1000,
+          temperature: 0.7,
         },
         {
           headers: {
@@ -165,6 +224,61 @@ export default function Health() {
           timestamp: new Date(),
         },
       ]);
+    }
+  };
+
+  // Toggle between voice and keyboard input modes
+  const toggleInputMode = () => {
+    setIsVoiceMode(!isVoiceMode);
+    if (isRecording) {
+      stopRecording();
+    }
+  };
+  
+  // Toggle profile information display
+  const toggleProfileDisplay = () => {
+    setShowProfile(!showProfile);
+  };
+  
+  // Start voice recording (mock)
+  const startRecording = () => {
+    setIsRecording(true);
+    // Visual feedback animation
+    micScale.value = withSequence(
+      withTiming(1.2, { duration: 300 }),
+      withTiming(1, { duration: 300 })
+    );
+  };
+  
+  // Stop voice recording and process input (mock)
+  const stopRecording = () => {
+    setIsRecording(false);
+    
+    // Mock sending a voice transcription after recording stops
+    if (recordingTime > 0) {
+      setTimeout(() => {
+        const mockTranscription = "I am having a bad rash";
+        setInputText(mockTranscription);
+        
+        // Auto-send after a short delay
+        setTimeout(() => {
+          const userMessage = {
+            id: Date.now().toString(),
+            text: mockTranscription,
+            type: MESSAGE_TYPES.USER,
+            timestamp: new Date()
+          };
+          
+          setMessages(prev => [...prev, userMessage]);
+          setInputText('');
+          setIsLoading(true);
+          
+          // Process the transcription with the chat API
+          simulateChatGptResponse(mockTranscription).finally(() => {
+            setIsLoading(false);
+          });
+        }, 500);
+      }, 1000);
     }
   };
 
@@ -265,6 +379,54 @@ export default function Health() {
     );
   };
 
+  // Render user profile information card
+  const renderProfileInfo = () => {
+    if (!showProfile) return null;
+    
+    return (
+      <Animated.View 
+        style={styles.profileCard}
+        entering={FadeInUp.duration(300)}
+        exiting={FadeOut.duration(200)}
+      >
+        <View style={styles.profileHeader}>
+          <Text style={styles.profileTitle}>Your Health Profile</Text>
+          <TouchableOpacity onPress={toggleProfileDisplay}>
+            <Ionicons name="close" size={22} color="#64748b" />
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.profileSection}>
+          <Text style={styles.profileSectionTitle}>Age</Text>
+          <Text style={styles.profileText}>{USER_PROFILE.age} years old</Text>
+        </View>
+        
+        <View style={styles.profileSection}>
+          <Text style={styles.profileSectionTitle}>Gender</Text>
+          <Text style={styles.profileText}>{USER_PROFILE.gender}</Text>
+        </View>
+        
+        <View style={styles.profileSection}>
+          <Text style={styles.profileSectionTitle}>Allergies</Text>
+          {USER_PROFILE.allergies.map((allergy, index) => (
+            <Text key={`allergy-${index}`} style={styles.profileListItem}>• {allergy}</Text>
+          ))}
+        </View>
+        
+        <View style={styles.profileSection}>
+          <Text style={styles.profileSectionTitle}>Medical History</Text>
+          {USER_PROFILE.medicalHistory.map((history, index) => (
+            <Text key={`history-${index}`} style={styles.profileListItem}>• {history}</Text>
+          ))}
+        </View>
+        
+        <Text style={styles.profileNote}>
+          This information is included automatically with each of your symptom descriptions.
+        </Text>
+      </Animated.View>
+    );
+  };
+
   const renderMessage = (message, index) => {
     if (message.type === MESSAGE_TYPES.OPTION) {
       return (
@@ -304,12 +466,19 @@ export default function Health() {
     );
   };
 
-  // Animated style for the input container
-  const inputContainerStyle = useAnimatedStyle(() => {
+  // Animated style for the microphone
+  const micAnimatedStyle = useAnimatedStyle(() => {
     return {
-      height: inputHeight.value,
+      transform: [{ scale: micScale.value }],
     };
   });
+
+  // Format recording time
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   return (
     <View style={styles.container}>
@@ -319,9 +488,20 @@ export default function Health() {
           <Ionicons name="arrow-back" size={24} color="#0077b6" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Health Assistant</Text>
-        <TouchableOpacity onPress={resetAssessment}>
-          <Ionicons name="refresh" size={24} color="#0077b6" />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity 
+            style={styles.profileButton} 
+            onPress={toggleProfileDisplay}
+          >
+            <Ionicons name="person-circle-outline" size={24} color="#0077b6" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.resetButton} 
+            onPress={resetAssessment}
+          >
+            <Ionicons name="refresh" size={24} color="#0077b6" />
+          </TouchableOpacity>
+        </View>
       </RNAnimated.View>
       
       <KeyboardAvoidingView 
@@ -330,6 +510,8 @@ export default function Health() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <View style={styles.content}>
+          {renderProfileInfo()}
+          
           <ScrollView 
             ref={scrollViewRef}
             style={styles.messagesContainer}
@@ -346,27 +528,98 @@ export default function Health() {
             )}
           </ScrollView>
           
-          <Animated.View style={styles.inputContainer }>
-            <TextInput
-              style={styles.input}
-              placeholder="Type your symptoms here..."
-              value={inputText}
-              onChangeText={handleInputChange}
-              multiline= {false}
-            />
-            <TouchableOpacity 
-              style={[
-                styles.sendButton,
-                !inputText.trim() && styles.disabledSendButton
-              ]}
-              onPress={sendMessage}
-              disabled={!inputText.trim() || isLoading}
+          {/* Voice recording indicator */}
+          {isVoiceMode && isRecording && (
+            <Animated.View 
+              style={styles.recordingIndicator}
+              entering={FadeIn.duration(300)}
+              exiting={FadeOut.duration(300)}
             >
-              <Ionicons name="send" size={20} color="white" />
+              <View style={styles.recordingDot} />
+              <Text style={styles.recordingText}>Recording... {formatTime(recordingTime)}</Text>
+              <Text style={styles.recordingHint}>Tap microphone when finished</Text>
+            </Animated.View>
+          )}
+          
+          {/* Input Area */}
+          <Animated.View style={styles.inputContainer}>
+            {/* Switch between keyboard and voice input */}
+            <TouchableOpacity 
+              style={styles.inputModeToggle}
+              onPress={toggleInputMode}
+              accessibilityLabel={isVoiceMode ? "Switch to keyboard input" : "Switch to voice input"}
+              accessibilityHint={isVoiceMode ? "Double tap to use keyboard typing" : "Double tap to use voice recording"}
+            >
+              <Ionicons 
+                name={isVoiceMode ? "keyboard-outline" : "mic-outline"} 
+                size={22} 
+                color="#0077b6" 
+              />
             </TouchableOpacity>
+            
+            {!isVoiceMode ? (
+              /* Keyboard input mode */
+              <>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Describe your symptoms here..."
+                  value={inputText}
+                  onChangeText={handleInputChange}
+                  multiline={false}
+                  accessibilityLabel="Input field for symptoms"
+                />
+                <TouchableOpacity 
+                  style={[
+                    styles.sendButton,
+                    !inputText.trim() && styles.disabledSendButton
+                  ]}
+                  onPress={sendMessage}
+                  disabled={!inputText.trim() || isLoading}
+                  accessibilityLabel="Send message"
+                >
+                  <Ionicons name="send" size={20} color="white" />
+                </TouchableOpacity>
+              </>
+            ) : (
+              /* Voice input mode */
+              <TouchableOpacity 
+                style={[
+                  styles.voiceButton,
+                  isRecording && styles.voiceButtonRecording
+                ]}
+                onPress={isRecording ? stopRecording : startRecording}
+                accessibilityLabel={isRecording ? "Stop recording" : "Start recording"}
+                accessibilityHint={isRecording ? "Double tap to stop recording voice input" : "Double tap to start recording voice input"}
+              >
+                <Animated.View style={micAnimatedStyle}>
+                  <Ionicons 
+                    name={isRecording ? "stop" : "mic"} 
+                    size={24} 
+                    color="white" 
+                  />
+                </Animated.View>
+                <Text style={styles.voiceButtonText}>
+                  {isRecording ? "Tap to stop" : "Tap to speak"}
+                </Text>
+              </TouchableOpacity>
+            )}
           </Animated.View>
         </View>
       </KeyboardAvoidingView>
+      
+      {/* Accessibility instructions panel */}
+      <TouchableOpacity 
+        style={styles.accessibilityHint}
+        onPress={() => Alert.alert(
+          "Input Options", 
+          "You can switch between keyboard typing and voice input by tapping the icon on the left of the input area. Tap the profile icon to view your health information.",
+          [{ text: "Got it" }]
+        )}
+        accessibilityLabel="Input options help"
+      >
+        <Ionicons name="help-circle-outline" size={18} color="#64748b" />
+        <Text style={styles.accessibilityHintText}>Input options</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -395,9 +648,67 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1e293b',
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  profileButton: {
+    marginRight: 16,
+  },
+  resetButton: {
+    
+  },
   content: {
     flex: 1,
     backgroundColor: '#f8fafc',
+  },
+  profileCard: {
+    backgroundColor: '#ffffff',
+    margin: 16,
+    marginBottom: 8,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+    padding: 16,
+  },
+  profileHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  profileTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1e293b',
+  },
+  profileSection: {
+    marginBottom: 12,
+  },
+  profileSectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#0077b6',
+    marginBottom: 4,
+  },
+  profileText: {
+    fontSize: 14,
+    color: '#1e293b',
+  },
+  profileListItem: {
+    fontSize: 14,
+    color: '#1e293b',
+    marginBottom: 2,
+    paddingLeft: 4,
+  },
+  profileNote: {
+    fontSize: 12,
+    color: '#64748b',
+    fontStyle: 'italic',
+    marginTop: 8,
   },
   messagesContainer: {
     flex: 1,
@@ -450,8 +761,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderTopWidth: 1,
     borderTopColor: '#e2e8f0',
-    alignItems: 'center', // Changed from 'flex-end' to 'center'
-    height: 64, // Fixed height for the container
+    alignItems: 'center',
+    height: 70,
   },
   input: {
     flex: 1,
@@ -461,12 +772,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingRight: 40,
     fontSize: 16,
-    height: 40, // Fixed height for the input
+    height: 46,
+    marginLeft: 8,
   },
   sendButton: {
     position: 'absolute',
     right: 22,
-    bottom: 16, // Fixed distance from bottom
+    bottom: 21,
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -476,6 +788,63 @@ const styles = StyleSheet.create({
   },
   disabledSendButton: {
     backgroundColor: '#94a3b8',
+  },
+  inputModeToggle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  voiceButton: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: '#0077b6',
+    borderRadius: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+    height: 48,
+  },
+  voiceButtonRecording: {
+    backgroundColor: '#ef4444',
+  },
+  voiceButtonText: {
+    color: 'white',
+    marginLeft: 10,
+    fontWeight: '500',
+    fontSize: 16,
+  },
+  recordingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 8,
+  },
+  recordingDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#ef4444',
+    marginRight: 8,
+  },
+  recordingText: {
+    color: '#ef4444',
+    fontWeight: '500',
+    fontSize: 14,
+  },
+  recordingHint: {
+    color: '#64748b',
+    fontSize: 12,
+    marginLeft: 'auto',
   },
   loadingContainer: {
     flexDirection: 'row',
@@ -496,6 +865,18 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontSize: 16,
     color: '#64748b',
+  },
+  accessibilityHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 8,
+    backgroundColor: 'rgba(148, 163, 184, 0.1)',
+  },
+  accessibilityHintText: {
+    color: '#64748b',
+    fontSize: 12,
+    marginLeft: 4,
   },
   optionsContainer: {
     marginBottom: 20,
