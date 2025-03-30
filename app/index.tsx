@@ -1,31 +1,174 @@
-import React, { useEffect } from 'react';
-import { Text, View, StyleSheet, Image, TouchableOpacity, ScrollView, Dimensions } from "react-native";
+import React, { useEffect, useRef } from 'react';
+import { Text, View, StyleSheet, Image, TouchableOpacity, ScrollView, Dimensions, ActivityIndicator } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, Easing } from 'react-native-reanimated';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withTiming, 
+  withSpring, 
+  withDelay, 
+  Easing,
+  interpolate,
+  Extrapolate,
+  useAnimatedScrollHandler
+} from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
+
 export default function Index() {
   const router = useRouter();
+  const scrollY = useSharedValue(0);
+  const scrollRef = useRef(null);
+  
+  // Multiple animated values for staggered animations
   const fadeAnim = useSharedValue(0);
-  const slideAnim = useSharedValue(50);
+  const welcomeSlideAnim = useSharedValue(50);
+  const medicationSlideAnim = useSharedValue(70);
+  const appointmentsSlideAnim = useSharedValue(90);
+  const tipsSlideAnim = useSharedValue(110);
+  const emergencySlideAnim = useSharedValue(50);
+  
+  // Scale animations for cards on interaction
+  const actionCardScale = useSharedValue(1);
   
   useEffect(() => {
+    // Main content fade in
     fadeAnim.value = withTiming(1, { duration: 1000 });
-    slideAnim.value = withTiming(0, { duration: 800, easing: Easing.out(Easing.quad) });
+    
+    // Staggered slide-up animations
+    welcomeSlideAnim.value = withTiming(0, { 
+      duration: 800, 
+      easing: Easing.out(Easing.quad) 
+    });
+    
+    medicationSlideAnim.value = withDelay(
+      200, 
+      withTiming(0, { 
+        duration: 800, 
+        easing: Easing.out(Easing.quad) 
+      })
+    );
+    
+    appointmentsSlideAnim.value = withDelay(
+      400, 
+      withTiming(0, { 
+        duration: 800, 
+        easing: Easing.out(Easing.quad) 
+      })
+    );
+    
+    tipsSlideAnim.value = withDelay(
+      600, 
+      withTiming(0, { 
+        duration: 800, 
+        easing: Easing.out(Easing.quad) 
+      })
+    );
+    
+    emergencySlideAnim.value = withDelay(
+      800, 
+      withTiming(0, { 
+        duration: 800, 
+        easing: Easing.out(Easing.quad) 
+      })
+    );
   }, []);
   
-  const animatedStyle = useAnimatedStyle(() => {
+  // Scroll handler
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+  
+  // Animated styles for sections
+  const welcomeAnimatedStyle = useAnimatedStyle(() => {
     return {
       opacity: fadeAnim.value,
-      transform: [{ translateY: slideAnim.value }],
+      transform: [{ translateY: welcomeSlideAnim.value }],
+    };
+  });
+  
+  const medicationAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: fadeAnim.value,
+      transform: [{ translateY: medicationSlideAnim.value }],
+    };
+  });
+  
+  const appointmentsAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: fadeAnim.value,
+      transform: [{ translateY: appointmentsSlideAnim.value }],
+    };
+  });
+  
+  const tipsAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: fadeAnim.value,
+      transform: [{ translateY: tipsSlideAnim.value }],
+    };
+  });
+  
+  const emergencyAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: fadeAnim.value,
+      transform: [{ translateY: emergencySlideAnim.value }],
+    };
+  });
+  
+  // Parallax effect for header
+  const headerAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { 
+          translateY: interpolate(
+            scrollY.value,
+            [0, 100],
+            [0, -20],
+            Extrapolate.CLAMP
+          ) 
+        }
+      ],
+      opacity: interpolate(
+        scrollY.value,
+        [0, 100],
+        [1, 0.9],
+        Extrapolate.CLAMP
+      )
+    };
+  });
+  
+  // Action card press animation
+  const actionCardAnimatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: actionCardScale.value }]
     };
   });
 
+  const pressActionCard = () => {
+    actionCardScale.value = withSpring(0.95, { damping: 10 });
+    setTimeout(() => {
+      actionCardScale.value = withSpring(1);
+    }, 150);
+  };
+
   const navigateTo = (screen: string) => {
-    router.push(screen);
+    pressActionCard();
+    setTimeout(() => {
+      router.push(screen);
+    }, 150);
+  };
+
+  // Images with actual URLs instead of placeholders
+  const logoImage = require('../assets/images/singhealth-logo.png'); // You'll need to add this to your assets
+  const tipImages = {
+    hydration: require('../assets/images/hydration-tip.jpg'), // You'll need to add this to your assets
+    sleep: require('../assets/images/sleep-tip.jpg') // You'll need to add this to your assets
   };
 
   return (
@@ -35,66 +178,89 @@ export default function Index() {
         style={styles.background}
       />
       
-      {/* Header */}
-      <View style={styles.header}>
+      {/* Header with Animated Opacity */}
+      <Animated.View style={[styles.header, headerAnimatedStyle]}>
         <Image 
-          source={{ uri: 'https://placehold.co/200x50?text=SingHealth' }} 
+          source={logoImage} 
           style={styles.logo}
+          defaultSource={require('../assets/images/logo-placeholder.png')} // Placeholder during loading
         />
-        <TouchableOpacity style={styles.profileButton} onPress={() => navigateTo('/profile')}>
+        <AnimatedTouchableOpacity 
+          style={[styles.profileButton, actionCardAnimatedStyle]}
+          onPress={() => navigateTo('/profile')}
+          onPressIn={pressActionCard}
+        >
           <Ionicons name="person-circle-outline" size={32} color="#0077b6" />
-        </TouchableOpacity>
-      </View>
+        </AnimatedTouchableOpacity>
+      </Animated.View>
       
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        <Animated.View style={[styles.welcomeSection, animatedStyle]}>
+      <Animated.ScrollView 
+        style={styles.scrollView} 
+        showsVerticalScrollIndicator={false}
+        ref={scrollRef}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16} // Important for smooth animations
+      >
+        <Animated.View style={[styles.welcomeSection, welcomeAnimatedStyle]}>
           <Text style={styles.welcomeText}>Welcome to SingHealth</Text>
           <Text style={styles.subtitle}>Your health, our priority</Text>
           
-          {/* Quick Action Cards - Modified to 2x2 grid */}
+          {/* Quick Action Cards - With Press Animation */}
           <View style={styles.quickActionsContainer}>
             {/* First row */}
             <View style={styles.actionRow}>
-              <TouchableOpacity 
-                style={styles.actionCard}
+              <AnimatedTouchableOpacity 
+                style={[styles.actionCard, actionCardAnimatedStyle]}
                 onPress={() => navigateTo('/appointments')}
+                onPressIn={pressActionCard}
               >
-                <Ionicons name="calendar" size={28} color="#0077b6" />
+                <View style={styles.iconContainer}>
+                  <Ionicons name="calendar" size={28} color="#ffffff" />
+                </View>
                 <Text style={styles.actionText}>Book Appointment</Text>
-              </TouchableOpacity>
+              </AnimatedTouchableOpacity>
               
-              <TouchableOpacity 
-                style={styles.actionCard}
+              <AnimatedTouchableOpacity 
+                style={[styles.actionCard, actionCardAnimatedStyle]}
                 onPress={() => navigateTo('/health')}
+                onPressIn={pressActionCard}
               >
-                <Ionicons name="medkit" size={28} color="#0077b6" />
+                <View style={[styles.iconContainer, { backgroundColor: '#22c55e' }]}>
+                  <Ionicons name="medkit" size={28} color="#ffffff" />
+                </View>
                 <Text style={styles.actionText}>Health Assistant</Text>
-              </TouchableOpacity>
+              </AnimatedTouchableOpacity>
             </View>
             
             {/* Second row */}
             <View style={styles.actionRow}>
-              <TouchableOpacity 
-                style={styles.actionCard}
+              <AnimatedTouchableOpacity 
+                style={[styles.actionCard, actionCardAnimatedStyle]}
                 onPress={() => navigateTo('/medication')}
+                onPressIn={pressActionCard}
               >
-                <Ionicons name="medical" size={28} color="#0077b6" />
+                <View style={[styles.iconContainer, { backgroundColor: '#f59e0b' }]}>
+                  <Ionicons name="medical" size={28} color="#ffffff" />
+                </View>
                 <Text style={styles.actionText}>Medication</Text>
-              </TouchableOpacity>
+              </AnimatedTouchableOpacity>
               
-              <TouchableOpacity 
-                style={styles.actionCard}
+              <AnimatedTouchableOpacity 
+                style={[styles.actionCard, actionCardAnimatedStyle]}
                 onPress={() => navigateTo('/reports')}
+                onPressIn={pressActionCard}
               >
-                <Ionicons name="document-text" size={28} color="#0077b6" />
+                <View style={[styles.iconContainer, { backgroundColor: '#8b5cf6' }]}>
+                  <Ionicons name="document-text" size={28} color="#ffffff" />
+                </View>
                 <Text style={styles.actionText}>Health Report</Text>
-              </TouchableOpacity>
+              </AnimatedTouchableOpacity>
             </View>
           </View>
         </Animated.View>
         
-        {/* Medication Reminders Section (Moved up) */}
-        <Animated.View style={[styles.sectionContainer, animatedStyle]}>
+        {/* Medication Reminders Section with staggered animation */}
+        <Animated.View style={[styles.sectionContainer, medicationAnimatedStyle]}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Medication Reminders</Text>
             <TouchableOpacity onPress={() => navigateTo('/medication')}>
@@ -103,7 +269,10 @@ export default function Index() {
           </View>
           
           {/* Today's Medication Card */}
-          <View style={styles.medicationCard}>
+          <TouchableOpacity 
+            style={styles.medicationCard}
+            activeOpacity={0.8}
+          >
             <View style={styles.medicationTime}>
               <Ionicons name="time-outline" size={24} color="#0077b6" />
               <Text style={styles.medTimeText}>8:00 AM</Text>
@@ -119,13 +288,19 @@ export default function Index() {
                 <Text style={styles.statusText}>Take now</Text>
               </View>
             </View>
-            <TouchableOpacity style={styles.takenButton}>
+            <TouchableOpacity 
+              style={styles.takenButton}
+              activeOpacity={0.7}
+            >
               <Text style={styles.takenButtonText}>Mark as Taken</Text>
             </TouchableOpacity>
-          </View>
+          </TouchableOpacity>
           
           {/* Evening Medication Card */}
-          <View style={styles.medicationCard}>
+          <TouchableOpacity 
+            style={styles.medicationCard}
+            activeOpacity={0.8}
+          >
             <View style={styles.medicationTime}>
               <Ionicons name="time-outline" size={24} color="#0077b6" />
               <Text style={styles.medTimeText}>7:00 PM</Text>
@@ -141,20 +316,21 @@ export default function Index() {
                 <Text style={styles.upcomingStatusText}>Upcoming</Text>
               </View>
             </View>
-          </View>
+          </TouchableOpacity>
           
           {/* Add Medication Button */}
           <TouchableOpacity 
             style={styles.addMedicationButton}
             onPress={() => navigateTo('/medication')}
+            activeOpacity={0.7}
           >
             <Ionicons name="add-circle-outline" size={20} color="#ffffff" />
             <Text style={styles.addMedicationText}>Add Medication</Text>
           </TouchableOpacity>
         </Animated.View>
         
-        {/* Upcoming Appointments Section (Moved down) */}
-        <Animated.View style={[styles.sectionContainer, animatedStyle]}>
+        {/* Upcoming Appointments Section with staggered animation */}
+        <Animated.View style={[styles.sectionContainer, appointmentsAnimatedStyle]}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Upcoming Appointments</Text>
             <TouchableOpacity onPress={() => navigateTo('/appointments')}>
@@ -162,7 +338,10 @@ export default function Index() {
             </TouchableOpacity>
           </View>
           
-          <View style={styles.appointmentCard}>
+          <TouchableOpacity 
+            style={styles.appointmentCard}
+            activeOpacity={0.8}
+          >
             <View style={styles.appointmentCardLeft}>
               <Text style={styles.appointmentDate}>Wed, Apr 2</Text>
               <Text style={styles.appointmentTime}>9:30 AM</Text>
@@ -172,31 +351,21 @@ export default function Index() {
               <Text style={styles.appointmentType}>General Checkup</Text>
               <Text style={styles.appointmentLocation}>Singapore General Hospital</Text>
             </View>
-          </View>
-          
-          {/* Empty state for when no appointments */}
-          {/* 
-          <View style={styles.emptyStateContainer}>
-            <Ionicons name="calendar-outline" size={60} color="#cbd5e1" />
-            <Text style={styles.emptyStateText}>No upcoming appointments</Text>
-            <TouchableOpacity 
-              style={styles.bookButton}
-              onPress={() => navigateTo('/appointments')}
-            >
-              <Text style={styles.bookButtonText}>Book Now</Text>
-            </TouchableOpacity>
-          </View>
-          */}
+          </TouchableOpacity>
         </Animated.View>
         
-        {/* Health Tips Section */}
-        <Animated.View style={[styles.sectionContainer, animatedStyle]}>
+        {/* Health Tips Section with staggered animation and improved images */}
+        <Animated.View style={[styles.sectionContainer, tipsAnimatedStyle]}>
           <Text style={styles.sectionTitle}>Health Tips</Text>
           
-          <TouchableOpacity style={styles.tipCard}>
+          <TouchableOpacity 
+            style={styles.tipCard}
+            activeOpacity={0.8}
+          >
             <Image 
-              source={{ uri: 'https://placehold.co/100?text=Health' }} 
+              source={tipImages.hydration} 
               style={styles.tipImage}
+              defaultSource={require('../assets/images/tip-placeholder.png')}
             />
             <View style={styles.tipContent}>
               <Text style={styles.tipTitle}>Stay Hydrated</Text>
@@ -206,10 +375,14 @@ export default function Index() {
             </View>
           </TouchableOpacity>
           
-          <TouchableOpacity style={styles.tipCard}>
+          <TouchableOpacity 
+            style={styles.tipCard}
+            activeOpacity={0.8}
+          >
             <Image 
-              source={{ uri: 'https://placehold.co/100?text=Health' }} 
+              source={tipImages.sleep} 
               style={styles.tipImage}
+              defaultSource={require('../assets/images/tip-placeholder.png')}
             />
             <View style={styles.tipContent}>
               <Text style={styles.tipTitle}>Sleep Well</Text>
@@ -220,14 +393,19 @@ export default function Index() {
           </TouchableOpacity>
         </Animated.View>
         
-        {/* Emergency Information */}
-        <TouchableOpacity style={styles.emergencyBanner}>
-          <Ionicons name="alert-circle" size={24} color="#ffffff" />
-          <Text style={styles.emergencyText}>Emergency? Call 995</Text>
-        </TouchableOpacity>
+        {/* Emergency Information with bounce animation */}
+        <Animated.View style={[emergencyAnimatedStyle, { marginHorizontal: 20, marginBottom: 30 }]}>
+          <TouchableOpacity 
+            style={styles.emergencyBanner}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="alert-circle" size={24} color="#ffffff" />
+            <Text style={styles.emergencyText}>Emergency? Call 995</Text>
+          </TouchableOpacity>
+        </Animated.View>
         
         <View style={styles.footer} />
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
@@ -251,6 +429,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 50,
     paddingBottom: 10,
+    zIndex: 10,
   },
   logo: {
     width: 150,
@@ -288,21 +467,31 @@ const styles = StyleSheet.create({
   },
   actionCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
     width: (width - 60) / 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  iconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#0077b6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   actionText: {
-    marginTop: 10,
+    marginTop: 5,
     fontWeight: '600',
     color: '#1e293b',
+    fontSize: 14,
   },
   sectionContainer: {
     padding: 20,
@@ -315,7 +504,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#1e293b',
     marginBottom: 15,
@@ -326,14 +515,14 @@ const styles = StyleSheet.create({
   },
   appointmentCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 20,
     flexDirection: 'row',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
     marginBottom: 10,
   },
   appointmentCardLeft: {
@@ -371,40 +560,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#64748b',
   },
-  emptyStateContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 30,
-  },
-  emptyStateText: {
-    fontSize: 16,
-    color: '#64748b',
-    marginVertical: 10,
-  },
-  bookButton: {
-    backgroundColor: '#0077b6',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  bookButtonText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-  },
-  // Medication styles (new)
+  // Medication styles (improved)
   medicationCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 15,
     marginBottom: 15,
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   medicationTime: {
     alignItems: 'center',
@@ -484,6 +652,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   addMedicationText: {
     color: '#ffffff',
@@ -491,23 +664,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginLeft: 8,
   },
-  // Existing styles from your original component
+  // Tip styles (improved)
   tipCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 15,
     flexDirection: 'row',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
     marginBottom: 15,
   },
   tipImage: {
     width: 80,
     height: 80,
-    borderRadius: 10,
+    borderRadius: 12,
     marginRight: 15,
   },
   tipContent: {
@@ -527,13 +700,16 @@ const styles = StyleSheet.create({
   },
   emergencyBanner: {
     backgroundColor: '#ef4444',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 15,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 20,
-    marginBottom: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
   emergencyText: {
     color: '#ffffff',
