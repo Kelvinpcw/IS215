@@ -43,18 +43,18 @@ const ASSESSMENT_OUTCOMES = {
 
 // User profile information (fixed for this example)
 const USER_PROFILE = {
-  age: 60,
-  gender: 'Male',
+  age: 72,
+  gender: 'Female',
   allergies: [
-    'Penicillin (causes hives and difficulty breathing)',
-    'Shellfish (causes severe swelling and anaphylaxis)',
-    'Dust mites (causes sneezing and congestion)',
-    'Latex (causes skin rash and itching)'
+    'Penicillin (causes rash and swelling)',
+    'Peanuts (causes difficulty breathing)',
+    'Aspirin (causes stomach bleeding and dizziness)'
   ],
   medicalHistory: [
-    'Type 2 diabetes diagnosed 8 years ago, currently managed with oral medication',
-    'Hypertension for 12 years, controlled with medication',
-    'Mild heart attack 5 years ago, followed by stent placement'
+    'Type 2 diabetes diagnosed 10 years ago, managed with insulin',
+    'Hypertension for 15 years, controlled with medication',
+    'Mild stroke 3 years ago, undergoing regular check-ups',
+    'Mild kidney disease diagnosed last year, monitored closely'
   ]
 };
 
@@ -175,7 +175,7 @@ ${USER_PROFILE.medicalHistory.map(history => `* ${history}`).join('\n')}`;
 
   // This function simulates the integration with ChatGPT API
   const simulateChatGptResponse = async (userInput) => {
-    const apiKey = 'CHAT_GPT_APIKEY'; // Replace with your actual API key
+    const apiKey = 'YOUR_CHAT_GPT_API_KEY'; // Replace with your actual API key
     const apiUrl = 'https://api.openai.com/v1/chat/completions';
 
     // Combine user profile with their input
@@ -188,7 +188,18 @@ ${USER_PROFILE.medicalHistory.map(history => `* ${history}`).join('\n')}`;
         {
           model: 'gpt-4o-mini',
           messages: [
-            { role: 'system', content: "You are a helpful health assistant trained to provide general health advice based on user input. While you aim to provide accurate and helpful information/basic diagnosis, you are not a licensed medical professional. Always advise users to consult a qualified healthcare provider for medical concerns. Consider the patient's age, gender, allergies, and medical history when providing advice." },
+            { role: 'system', content: `
+              You are a knowledgeable health information assistant trained to provide evidence-based health information and general guidance. While you can offer educational content about health conditions and wellness practices, you:
+                1. Aim to provide accurate and helpful information/basic diagnosis, you are not a licensed medical professional.
+                2. Will always recommend consulting qualified healthcare providers for specific medical concerns
+                3. Will consider provided details like age, gender, symptoms, medical history, and allergies when discussing health topics
+                4. Will acknowledge limitations and uncertainties in medical knowledge
+                5. Will prioritize patient safety by emphasizing when immediate medical attention might be necessary
+                6. Will provide balanced information about treatment options without recommending specific medications or dosages
+                7. Will use clear, accessible language and avoid unnecessary medical jargon
+                8. Will provide contextual information about prevention, risk factors, and general health maintenance
+                9. Will cite reputable health organizations when appropriate
+              ` },
             { role: 'user', content: combinedInput },
           ],
           max_tokens: 1000,
@@ -257,7 +268,7 @@ ${USER_PROFILE.medicalHistory.map(history => `* ${history}`).join('\n')}`;
     // Mock sending a voice transcription after recording stops
     if (recordingTime > 0) {
       setTimeout(() => {
-        const mockTranscription = "I am having a bad rash";
+        const mockTranscription = "I accidentally missed my insulin dose last night. What should I do now?";
         setInputText(mockTranscription);
         
         // Auto-send after a short delay

@@ -52,7 +52,7 @@ export default function Profile() {
                 <Ionicons name="pencil" size={16} color="#ffffff" />
               </TouchableOpacity>
             </View>
-            <Text style={styles.profileName}>John Tan</Text>
+            <Text style={styles.profileName}>Mary Tan</Text>
             <Text style={styles.profileId}>NRIC: S*****678J</Text>
             <View style={styles.profileActions}>
               <TouchableOpacity style={styles.actionButton}>
@@ -90,7 +90,7 @@ export default function Profile() {
               <Ionicons name="alert-circle-outline" size={22} color="#0077b6" />
               <Text style={styles.infoLabel}>Allergies</Text>
             </View>
-            <Text style={styles.infoValue}>Penicillin, Peanuts</Text>
+            <Text style={styles.infoValue}>Penicillin, Peanuts, Asprin</Text>
           </View>
           
           <View style={styles.infoItem}>
